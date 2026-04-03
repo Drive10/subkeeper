@@ -2,16 +2,20 @@ import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import rateLimit from 'express-rate-limit';
 import swaggerUi from 'swagger-ui-express';
 import { createServer } from 'http';
 import { Server as SocketIOServer } from 'socket.io';
+
 import { config } from './config';
 import { logger } from './shared/utils/logger';
 import { connectDatabase, disconnectDatabase, prisma } from './shared/utils/database';
 import { connectRedis, disconnectRedis, getRedisClient } from './shared/utils/redis';
 import { AppError } from './shared/errors';
 import { swaggerSpec } from './config/swagger';
+import { initSentry, captureException } from './shared/utils/sentry';
+import { initEmailService } from './shared/utils/email';
+import { requestIdMiddleware, requestLogger } from './shared/middleware/requestLogger';
+import { globalLimiter, authLimiter } from './shared/middleware/rateLimit';
 
 import authRoutes from './modules/auth/routes';
 import subscriptionRoutes from './modules/subscription/routes';
@@ -20,12 +24,14 @@ import billingRoutes from './modules/billing/routes';
 import detectionRoutes from './modules/detection/routes';
 import analyticsRoutes from './modules/analytics/routes';
 
+initSentry();
+
 const app = express();
 const httpServer = createServer(app);
 
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: config.cors.origin,
     credentials: true,
   },
   pingTimeout: 60000,
@@ -57,23 +63,18 @@ export function emitNotification(userId: string, event: string, data: unknown) {
 
 export { io };
 
+app.use(requestIdMiddleware);
+app.use(requestLogger);
 app.use(helmet());
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  credentials: true,
+  origin: config.cors.origin,
+  credentials: config.cors.credentials,
 }));
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-const limiter = rateLimit({
-  windowMs: config.rateLimit.windowMs,
-  max: config.rateLimit.maxRequests,
-  message: { error: 'Too many requests, please try again later.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use('/api', limiter);
+app.use('/api', globalLimiter);
 
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
   customCss: '.swagger-ui .topbar { display: none }',
@@ -85,6 +86,8 @@ app.get('/health', async (_req, res) => {
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
+    version: config.api.version,
+    environment: config.env,
     services: {
       database: 'unknown',
       redis: 'unknown',
@@ -110,11 +113,7 @@ app.get('/health', async (_req, res) => {
   }
 
   try {
-    if (io.sockets.sockets.size > 0) {
-      health.services.websocket = 'healthy';
-    } else {
-      health.services.websocket = 'healthy';
-    }
+    health.services.websocket = io.sockets.sockets.size > 0 ? 'healthy' : 'healthy';
   } catch {
     health.services.websocket = 'unhealthy';
   }
@@ -127,7 +126,7 @@ app.get('/', (_req, res) => {
   res.redirect('/api-docs');
 });
 
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/reminders', reminderRoutes);
 app.use('/api/payments', billingRoutes);
@@ -139,21 +138,29 @@ app.use((_req, _res, next) => {
 });
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
-  logger.error('Error:', err);
+  logger.error(`[${_req.id}] Error:`, err);
+
+  captureException(err, {
+    requestId: _req.id,
+    path: _req.path,
+    method: _req.method,
+  });
 
   if (err instanceof AppError) {
     return res.status(err.statusCode).json({
       error: {
         message: err.message,
         code: err.code,
+        requestId: _req.id,
       },
     });
   }
 
   res.status(500).json({
     error: {
-      message: 'Internal server error',
+      message: config.isProduction ? 'Internal server error' : err.message,
       code: 'INTERNAL_SERVER_ERROR',
+      requestId: _req.id,
     },
   });
 });
@@ -162,13 +169,23 @@ async function startServer() {
   try {
     await connectDatabase();
     await connectRedis();
+    await initEmailService();
 
     httpServer.listen(config.port, () => {
-      logger.info(`🚀 Server running on port ${config.port} in ${config.nodeEnv} mode`);
-      logger.info(`📚 API docs available at http://localhost:${config.port}/api-docs`);
+      logger.info(`
+╔═══════════════════════════════════════════════════╗
+║  🚀 SubSense Server Running                        ║
+║  ───────────────────────────────────────────────  ║
+║  Environment: ${config.env.padEnd(30)}║
+║  Port: ${config.port.toString().padEnd(30)}║
+║  API: http://localhost:${config.port}${config.api.prefix}/${config.api.version}     ║
+║  Docs: http://localhost:${config.port}/api-docs              ║
+╚═══════════════════════════════════════════════════╝
+      `);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
+    captureException(error as Error, { context: 'startServer' });
     process.exit(1);
   }
 }

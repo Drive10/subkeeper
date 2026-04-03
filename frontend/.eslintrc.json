@@ -1,0 +1,9 @@
+{
+  "extends": ["react-app", "prettier"],
+  "rules": {
+    "prettier/prettier": "warn",
+    "no-unused-vars": "warn",
+    "no-console": "warn",
+    "react-hooks/exhaustive-deps": "warn"
+  }
+}
