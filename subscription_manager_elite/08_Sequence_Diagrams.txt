@@ -1,0 +1,11 @@
+Sequence (Reminder Flow)
+
+User → API → DB (subscription)
+DB → Queue (schedule reminder)
+Worker → DB (fetch reminders)
+Worker → Notification Service → Email/SMS
+
+Sequence (Detection Flow)
+
+SMS/Email → Parser → DetectionLogs
+Parser → Subscription Service (create/update)
