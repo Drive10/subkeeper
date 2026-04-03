@@ -1,4 +1,5 @@
 import { Router, Response, NextFunction } from 'express';
+import { emitNotification } from '../../index';
 import {
   createSubscription,
   getSubscriptions,
@@ -24,6 +25,7 @@ router.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const subscription = await createSubscription(req.user!.id, req.body);
+      emitNotification(req.user!.id, 'subscription:created', subscription);
       res.status(201).json(subscription);
     } catch (error) {
       next(error);
@@ -80,6 +82,7 @@ router.patch(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const subscription = await updateSubscription(req.params.id, req.user!.id, req.body);
+      emitNotification(req.user!.id, 'subscription:updated', subscription);
       res.json(subscription);
     } catch (error) {
       next(error);
@@ -93,6 +96,7 @@ router.delete(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       await deleteSubscription(req.params.id, req.user!.id);
+      emitNotification(req.user!.id, 'subscription:deleted', { id: req.params.id });
       res.status(204).send();
     } catch (error) {
       next(error);
@@ -106,6 +110,7 @@ router.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const subscription = await pauseSubscription(req.params.id, req.user!.id);
+      emitNotification(req.user!.id, 'subscription:paused', subscription);
       res.json(subscription);
     } catch (error) {
       next(error);
@@ -119,6 +124,7 @@ router.post(
   async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const subscription = await resumeSubscription(req.params.id, req.user!.id);
+      emitNotification(req.user!.id, 'subscription:resumed', subscription);
       res.json(subscription);
     } catch (error) {
       next(error);
