@@ -1,14 +1,16 @@
-import { LinearProgress, Box } from '@mui/material';
+import { LinearProgress, Box } from "@mui/material";
 
 interface LoadingStateProps {
   loading?: boolean;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function LoadingState({ loading = false, children }: LoadingStateProps) {
   if (loading) {
     return (
-      <Box sx={{ width: '100%', position: 'fixed', top: 0, left: 0, zIndex: 9999 }}>
+      <Box
+        sx={{ width: "100%", position: "fixed", top: 0, left: 0, zIndex: 9999 }}
+      >
         <LinearProgress />
       </Box>
     );
@@ -24,7 +26,7 @@ export function PageLoader() {
       alignItems="center"
       minHeight="400px"
     >
-      <LinearProgress sx={{ width: '50%' }} />
+      <LinearProgress sx={{ width: "50%" }} />
     </Box>
   );
 }

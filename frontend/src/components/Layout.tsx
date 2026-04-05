@@ -1,8 +1,30 @@
-import React from 'react';
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, Drawer, List, ListItem, ListItemIcon, ListItemText, useMediaQuery, useTheme } from '@mui/material';
-import { Dashboard, CreditCard, Analytics, Notifications, Menu, Logout } from '@mui/icons-material';
-import { useNavigate, useLocation, Outlet } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  useMediaQuery,
+  useTheme,
+} from "@mui/material";
+import {
+  Dashboard,
+  CreditCard,
+  AnalyticsOutlined,
+  Notifications,
+  Menu,
+  Logout,
+} from "@mui/icons-material";
+import { useNavigate, useLocation, Outlet } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 240;
 
@@ -12,18 +34,18 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const menuItems = [
-    { text: 'Dashboard', icon: <Dashboard />, path: '/dashboard' },
-    { text: 'Subscriptions', icon: <CreditCard />, path: '/subscriptions' },
-    { text: 'Analytics', icon: <Analytics />, path: '/analytics' },
-    { text: 'Reminders', icon: <Notifications />, path: '/reminders' },
+    { text: "Dashboard", icon: <Dashboard />, path: "/dashboard" },
+    { text: "Subscriptions", icon: <CreditCard />, path: "/subscriptions" },
+    { text: "Analytics", icon: <AnalyticsOutlined />, path: "/analytics" },
+    { text: "Reminders", icon: <Notifications />, path: "/reminders" },
   ];
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   const drawer = (
@@ -35,28 +57,36 @@ export default function Layout() {
       </Toolbar>
       <List>
         {menuItems.map((item) => (
-          <ListItem
-            button
-            key={item.text}
-            onClick={() => navigate(item.path)}
-            selected={location.pathname === item.path}
-            sx={{
-              '&.Mui-selected': { bgcolor: 'primary.light', color: 'white' },
-              '&.Mui-selected:hover': { bgcolor: 'primary.main' },
-            }}
-          >
-            <ListItemIcon sx={{ color: location.pathname === item.path ? 'white' : 'inherit' }}>
-              {item.icon}
-            </ListItemIcon>
-            <ListItemText primary={item.text} />
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton
+              onClick={() => navigate(item.path)}
+              selected={location.pathname === item.path}
+              sx={{
+                "&.Mui-selected": { bgcolor: "primary.light", color: "white" },
+                "&.Mui-selected:hover": { bgcolor: "primary.main" },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  color: location.pathname === item.path ? "white" : "inherit",
+                }}
+              >
+                {item.icon}
+              </ListItemIcon>
+              <ListItemText primary={item.text} />
+            </ListItemButton>
           </ListItem>
         ))}
       </List>
-      <Box sx={{ position: 'absolute', bottom: 0, width: '100%' }}>
+      <Box sx={{ position: "absolute", bottom: 0, width: "100%" }}>
         <List>
-          <ListItem button onClick={handleLogout}>
-            <ListItemIcon><Logout /></ListItemIcon>
-            <ListItemText primary="Logout" />
+          <ListItem disablePadding>
+            <ListItemButton onClick={handleLogout}>
+              <ListItemIcon>
+                <Logout />
+              </ListItemIcon>
+              <ListItemText primary="Logout" />
+            </ListItemButton>
           </ListItem>
         </List>
       </Box>
@@ -64,7 +94,7 @@ export default function Layout() {
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: "flex" }}>
       <AppBar
         position="fixed"
         sx={{
@@ -74,7 +104,11 @@ export default function Layout() {
       >
         <Toolbar>
           {isMobile && (
-            <IconButton color="inherit" edge="start" onClick={() => setMobileOpen(true)}>
+            <IconButton
+              color="inherit"
+              edge="start"
+              onClick={() => setMobileOpen(true)}
+            >
               <Menu />
             </IconButton>
           )}
@@ -100,8 +134,11 @@ export default function Layout() {
           onClose={() => setMobileOpen(false)}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
         >
           {drawer}
@@ -109,8 +146,11 @@ export default function Layout() {
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "none", md: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -120,7 +160,12 @@ export default function Layout() {
 
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` }, mt: 8 }}
+        sx={{
+          flexGrow: 1,
+          p: 3,
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
+        }}
       >
         <Outlet />
       </Box>
