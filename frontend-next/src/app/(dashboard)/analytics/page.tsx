@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -40,6 +41,7 @@ interface CategoryData {
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
 export default function AnalyticsPage() {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<Stats | null>(null);
@@ -54,7 +56,7 @@ export default function AnalyticsPage() {
     }
     setMounted(true);
     fetchData();
-  }, []);
+  }, [pathname]);
 
   const fetchData = async () => {
     try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,6 +42,7 @@ type SortOption = "price-asc" | "price-desc" | "date-asc" | "date-desc" | "name"
 type FilterOption = "all" | "monthly" | "yearly" | "active" | "paused";
 
 export default function SubscriptionsPage() {
+  const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,7 +59,7 @@ export default function SubscriptionsPage() {
     }
     setMounted(true);
     fetchSubscriptions();
-  }, []);
+  }, [pathname]);
 
   const fetchSubscriptions = async () => {
     try {
