@@ -20,6 +20,13 @@ const getHeaders = (): Record<string, string> => {
   return {};
 };
 
+const extractData = (json: any) => {
+  if (json.data?.data !== undefined) {
+    return json.data.data;
+  }
+  return json.data;
+};
+
 export const api = {
   getDashboard: async () => {
     const res = await fetch(`${getApiUrl()}/dashboard`, {
@@ -27,7 +34,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch dashboard");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 
   getSubscriptions: async (params?: { status?: string; category?: string }) => {
@@ -39,7 +46,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch subscriptions");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 
   createSubscription: async (data: {
@@ -56,7 +63,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to create subscription");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 
   getAnalytics: async () => {
@@ -65,7 +72,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch analytics");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 
   getCategoryBreakdown: async () => {
@@ -74,7 +81,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch category breakdown");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 
   getStats: async () => {
@@ -83,7 +90,7 @@ export const api = {
     });
     if (!res.ok) throw new Error("Failed to fetch stats");
     const json = await res.json();
-    return json.data;
+    return extractData(json);
   },
 };
 
