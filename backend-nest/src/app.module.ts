@@ -6,6 +6,8 @@ import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { BillingModule } from "./modules/billing/billing.module";
 import { DetectionModule } from "./modules/detection/detection.module";
 import { ReminderModule } from "./modules/reminder/reminder.module";
+import { HealthController } from "./health.controller";
+import { AppService } from "./app.service";
 
 @Module({
   imports: [
@@ -17,5 +19,7 @@ import { ReminderModule } from "./modules/reminder/reminder.module";
     DetectionModule,
     ReminderModule,
   ],
+  controllers: [HealthController],
+  providers: [AppService],
 })
 export class AppModule {}
