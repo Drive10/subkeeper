@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
+import { SubscriptionStatus } from "./subscription.dto";
 
 @Injectable()
 export class SubscriptionService {
@@ -16,11 +17,10 @@ export class SubscriptionService {
         name: dto.name,
         amount: dto.amount,
         currency: dto.currency || "INR",
-        billingCycle: dto.billingCycle || "monthly",
-        intervalCount: dto.intervalCount || 1,
+        billingCycle: dto.billingCycle,
         nextBillingDate: new Date(dto.nextBillingDate),
         category: dto.category,
-        description: dto.description,
+        status: "active",
       },
     });
   }
@@ -28,14 +28,28 @@ export class SubscriptionService {
   async findAll(
     userId: string,
     filters?: { status?: string; category?: string },
+    pagination?: { limit: number; page: number },
+    sortBy?: string,
+    sortOrder?: "asc" | "desc",
   ) {
     const where: any = { userId };
     if (filters?.status) where.status = filters.status;
     if (filters?.category) where.category = filters.category;
 
+    const orderBy: any = {};
+    if (sortBy) {
+      orderBy[sortBy] = sortOrder || "asc";
+    } else {
+      orderBy.nextBillingDate = "asc";
+    }
+
+    const skip = (pagination?.page || 0) * (pagination?.limit || 10);
+
     return this.prisma.subscription.findMany({
       where,
-      orderBy: { nextBillingDate: "asc" },
+      orderBy,
+      skip,
+      take: pagination?.limit,
     });
   }
 
@@ -65,33 +79,6 @@ export class SubscriptionService {
     await this.prisma.subscription.delete({ where: { id: subscriptionId } });
   }
 
-  async pause(subscriptionId: string, userId: string) {
-    await this.findById(subscriptionId, userId);
-
-    return this.prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: { status: "paused" },
-    });
-  }
-
-  async resume(subscriptionId: string, userId: string) {
-    const subscription = await this.findById(subscriptionId, userId);
-
-    if (subscription.status !== "paused") {
-      throw new Error("Can only resume paused subscriptions");
-    }
-
-    const nextBillingDate = this.calculateNextBillingDate(
-      new Date(),
-      subscription.billingCycle,
-    );
-
-    return this.prisma.subscription.update({
-      where: { id: subscriptionId },
-      data: { status: "active", nextBillingDate },
-    });
-  }
-
   async getUpcoming(userId: string, days: number = 7) {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + days);
@@ -106,25 +93,38 @@ export class SubscriptionService {
     });
   }
 
-  private calculateNextBillingDate(date: Date, billingCycle: string) {
-    const next = new Date(date);
-    switch (billingCycle) {
-      case "daily":
-        next.setDate(next.getDate() + 1);
-        break;
-      case "weekly":
-        next.setDate(next.getDate() + 7);
-        break;
-      case "monthly":
-        next.setMonth(next.getMonth() + 1);
-        break;
-      case "quarterly":
-        next.setMonth(next.getMonth() + 3);
-        break;
-      case "yearly":
-        next.setFullYear(next.getFullYear() + 1);
-        break;
-    }
-    return next;
+  async getCategoryWiseSpending(userId: string) {
+    return this.prisma.subscription.groupBy({
+      by: ["category"],
+      where: {
+        userId,
+        status: "active",
+        category: { not: null },
+      },
+      _sum: {
+        amount: true,
+      },
+    });
+  }
+
+  async getMonthlySpendingTrend(userId: string, months: number = 6) {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months + 1);
+    startDate.setDate(1);
+    startDate.setHours(0, 0, 0, 0);
+
+    return this.prisma.$queryRaw`
+      SELECT 
+        DATE_TRUNC('month', "nextBillingDate")::date as month,
+        SUM(amount) as total_spending
+      FROM "Subscription"
+      WHERE "userId" = ${userId}
+        AND "status" = 'active'
+        AND "nextBillingDate" >= ${startDate}
+        AND "nextBillingDate" <= ${endDate}
+      GROUP BY DATE_TRUNC('month', "nextBillingDate")
+      ORDER BY month;
+    `;
   }
 }

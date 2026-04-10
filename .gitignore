@@ -12,3 +12,7 @@ coverage/
 *.swo
 prisma/*.db
 prisma/*.db-journal
+frontend-next/.next/
+frontend-next/node_modules/
+playwright-report/
+test-results/

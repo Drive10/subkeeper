@@ -34,7 +34,8 @@ export class AuthService {
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: { id: user.id, email: user.email },
     };
   }
@@ -56,7 +57,8 @@ export class AuthService {
     await this.saveRefreshToken(user.id, tokens.refreshToken);
 
     return {
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
       user: { id: user.id, email: user.email },
     };
   }
@@ -66,7 +68,7 @@ export class AuthService {
   ): Promise<{ accessToken: string }> {
     const decoded = this.jwtService.verify(refreshToken);
 
-    const storedToken = await this.prisma.refreshToken.findUnique({
+    const storedToken = await this.prisma.refreshToken.findFirst({
       where: { token: refreshToken },
     });
 

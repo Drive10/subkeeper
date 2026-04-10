@@ -15,10 +15,7 @@ import {
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { AuthGuard } from "@nestjs/passport";
 import { SubscriptionService } from "./subscription.service";
-import {
-  CreateSubscriptionDto,
-  UpdateSubscriptionDto,
-} from "./subscription.dto";
+import { CreateSubscriptionDto, UpdateSubscriptionDto } from "./subscription.dto";
 
 @ApiTags("subscriptions")
 @Controller("subscriptions")
@@ -40,8 +37,20 @@ export class SubscriptionController {
     @Request() req,
     @Query("status") status?: string,
     @Query("category") category?: string,
+    @Query("limit") limit?: string,
+    @Query("page") page?: string,
+    @Query("sortBy") sortBy?: string,
+    @Query("sortOrder") sortOrder?: "asc" | "desc",
   ) {
-    return this.subscriptionService.findAll(req.user.id, { status, category });
+    const pagination = limit && page ? { limit: parseInt(limit), page: parseInt(page) } : undefined;
+    const data = await this.subscriptionService.findAll(
+      req.user.id,
+      { status, category },
+      pagination,
+      sortBy,
+      sortOrder,
+    );
+    return { data, count: Array.isArray(data) ? data.length : 0 };
   }
 
   @Get("upcoming")
@@ -76,15 +85,18 @@ export class SubscriptionController {
     return this.subscriptionService.delete(id, req.user.id);
   }
 
-  @Post(":id/pause")
-  @ApiOperation({ summary: "Pause subscription" })
-  async pause(@Request() req, @Param("id") id: string) {
-    return this.subscriptionService.pause(id, req.user.id);
+  @Get("analytics/category")
+  @ApiOperation({ summary: "Get category-wise spending" })
+  async getCategoryWiseSpending(@Request() req) {
+    return this.subscriptionService.getCategoryWiseSpending(req.user.id);
   }
 
-  @Post(":id/resume")
-  @ApiOperation({ summary: "Resume subscription" })
-  async resume(@Request() req, @Param("id") id: string) {
-    return this.subscriptionService.resume(id, req.user.id);
+  @Get("analytics/monthly-trend")
+  @ApiOperation({ summary: "Get monthly spending trend" })
+  async getMonthlySpendingTrend(@Request() req, @Query("months") months?: string) {
+    return this.subscriptionService.getMonthlySpendingTrend(
+      req.user.id,
+      months ? parseInt(months) : 6,
+    );
   }
 }

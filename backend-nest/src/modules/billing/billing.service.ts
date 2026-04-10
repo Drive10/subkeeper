@@ -11,7 +11,7 @@ export class BillingService {
     if (subscriptionId) where.subscriptionId = subscriptionId;
     return this.prisma.payment.findMany({
       where,
-      orderBy: { paymentDate: "desc" },
+      orderBy: { createdAt: "desc" },
     });
   }
 
@@ -21,7 +21,7 @@ export class BillingService {
       subscriptionId: string;
       amount: number;
       currency?: string;
-      paymentDate: string;
+      paidAt?: string;
     },
   ) {
     return this.prisma.payment.create({
@@ -31,8 +31,8 @@ export class BillingService {
         subscriptionId: data.subscriptionId,
         amount: data.amount,
         currency: data.currency || "INR",
-        paymentDate: new Date(data.paymentDate),
         status: "pending",
+        paidAt: data.paidAt ? new Date(data.paidAt) : null,
       },
     });
   }

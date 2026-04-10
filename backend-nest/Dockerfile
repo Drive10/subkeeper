@@ -1,6 +1,8 @@
-FROM node:20-alpine AS builder
+FROM node:20.14.0-alpine3.20 AS builder
 
 WORKDIR /app
+
+RUN apk add --no-cache openssl libssl3
 
 COPY package*.json ./
 RUN npm ci
@@ -12,7 +14,9 @@ COPY . .
 
 RUN npm run build
 
-FROM node:20-alpine
+FROM node:20.14.0-alpine3.20
+
+RUN apk add --no-cache libssl3
 
 WORKDIR /app
 

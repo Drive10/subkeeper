@@ -5,62 +5,49 @@ services:
     build:
       context: ./backend-nest
       dockerfile: Dockerfile
-    container_name: subscription_backend
+    container_name: subkeeper_backend
     ports:
       - "${BACKEND_PORT:-3001}:${PORT:-3001}"
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://subscription:changeme@subkeeper_db:5432/subscription_manager}
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key}
       - PORT=${PORT:-3001}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
     depends_on:
       db:
         condition: service_healthy
     restart: unless-stopped
-    networks:
-      - subscription_network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3001/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   frontend:
     build:
       context: ./frontend-next
       dockerfile: Dockerfile
-    container_name: subscription_frontend
+    container_name: subkeeper_frontend
     ports:
-      - "${FRONTEND_PORT:-3000}:${PORT:-3000}"
+      - "${FRONTEND_PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      - PORT=3000
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://subkeeper_backend:3001}
+    depends_on:
+      - backend
     restart: unless-stopped
-    networks:
-      - subscription_network
 
   db:
     image: postgres:15-alpine
-    container_name: subscription_db
+    container_name: subkeeper_db
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER:-subscription}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-changeme}
+      - POSTGRES_DB=${POSTGRES_DB:-subscription_manager}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
-    networks:
-      - subscription_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-subscription}"]
       interval: 10s
       timeout: 5s
       retries: 5
-
-networks:
-  subscription_network:
-    driver: bridge
 
 volumes:
   postgres_data:

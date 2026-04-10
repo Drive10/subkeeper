@@ -1,4 +1,13 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/api";
+const getApiBaseUrl = () => {
+  if (typeof window !== "undefined") {
+    return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
+    : "http://localhost:3001/api";
+};
+
+const API_URL = getApiBaseUrl();
 
 const getHeaders = (): Record<string, string> => {
   const token =

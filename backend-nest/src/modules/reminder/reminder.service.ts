@@ -13,14 +13,14 @@ export class ReminderService {
   }
 
   async create(
-    subscriptionId: string,
-    data: { reminderType: string; daysOffset: number; scheduledAt: Date },
+    userId: string,
+    data: { subscriptionId: string; type: string; scheduledAt: Date },
   ) {
     return this.prisma.reminder.create({
       data: {
-        subscriptionId,
-        reminderType: data.reminderType as any,
-        daysOffset: data.daysOffset,
+        userId,
+        subscriptionId: data.subscriptionId,
+        type: data.type,
         scheduledAt: data.scheduledAt,
       },
     });
@@ -28,12 +28,11 @@ export class ReminderService {
 
   async cancel(id: string, userId: string) {
     const reminder = await this.prisma.reminder.findFirst({
-      where: { id, subscription: { userId } },
+      where: { id, userId },
     });
     if (!reminder) throw new Error("Reminder not found");
-    return this.prisma.reminder.update({
+    return this.prisma.reminder.delete({
       where: { id },
-      data: { status: "cancelled" as any },
     });
   }
 }

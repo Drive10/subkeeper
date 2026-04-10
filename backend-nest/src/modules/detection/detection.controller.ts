@@ -21,7 +21,7 @@ export class DetectionController {
   @Post("sms")
   @ApiOperation({ summary: "Detect subscription from SMS" })
   async detectSms(@Request() req, @Body() body: { text: string }) {
-    return this.detectionService.detectSms(req.user.id, body.text);
+    return this.detectionService.detectFromSms(req.user.id, body.text);
   }
 
   @Post("confirm")
@@ -43,6 +43,6 @@ export class DetectionController {
   @Get("logs")
   @ApiOperation({ summary: "Get detection logs" })
   async getLogs(@Request() req, @Query("status") status?: string) {
-    return this.detectionService.getLogs(req.user.id, status);
+    return this.detectionService.getDetectionLogs(req.user.id);
   }
 }

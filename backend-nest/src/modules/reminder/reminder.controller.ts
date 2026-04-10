@@ -30,14 +30,12 @@ export class ReminderController {
   async create(
     @Request() req,
     @Body()
-    body: { subscriptionId: string; reminderType: string; daysOffset: number },
+    body: { subscriptionId: string; type: string; scheduledAt: string },
   ) {
-    const scheduledAt = new Date();
-    scheduledAt.setDate(scheduledAt.getDate() + body.daysOffset);
-    return this.reminderService.create(body.subscriptionId, {
-      reminderType: body.reminderType,
-      daysOffset: body.daysOffset,
-      scheduledAt,
+    return this.reminderService.create(req.user.id, {
+      subscriptionId: body.subscriptionId,
+      type: body.type,
+      scheduledAt: new Date(body.scheduledAt),
     });
   }
 

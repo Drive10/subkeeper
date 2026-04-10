@@ -7,14 +7,20 @@ import {
 } from "class-validator";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
-export enum BillingCycle {
-  daily = "daily",
-  weekly = "weekly",
-  monthly = "monthly",
-  quarterly = "quarterly",
-  yearly = "yearly",
-  custom = "custom",
-}
+export const BillingCycle = {
+  MONTHLY: "monthly",
+  YEARLY: "yearly",
+} as const;
+
+export const SubscriptionStatus = {
+  ACTIVE: "active",
+  CANCELLED: "cancelled",
+  PAUSED: "paused",
+  EXPIRED: "expired",
+} as const;
+
+export type BillingCycleType = typeof BillingCycle[keyof typeof BillingCycle];
+export type SubscriptionStatusType = typeof SubscriptionStatus[keyof typeof SubscriptionStatus];
 
 export class CreateSubscriptionDto {
   @ApiProperty()
@@ -30,14 +36,9 @@ export class CreateSubscriptionDto {
   @IsString()
   currency?: string;
 
-  @ApiProperty({ enum: BillingCycle })
-  @IsEnum(BillingCycle)
-  billingCycle: BillingCycle;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsNumber()
-  intervalCount?: number;
+  @ApiProperty({ enum: Object.values(BillingCycle) })
+  @IsString()
+  billingCycle: string;
 
   @ApiProperty()
   @IsDateString()
@@ -47,11 +48,6 @@ export class CreateSubscriptionDto {
   @IsOptional()
   @IsString()
   category?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  description?: string;
 }
 
 export class UpdateSubscriptionDto {
@@ -68,7 +64,7 @@ export class UpdateSubscriptionDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  status?: string;
+  billingCycle?: string;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -79,6 +75,11 @@ export class UpdateSubscriptionDto {
   @IsOptional()
   @IsString()
   category?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  status?: string;
 }
 
 export class SubscriptionDto {
@@ -98,10 +99,7 @@ export class SubscriptionDto {
   currency: string;
 
   @ApiProperty()
-  billingCycle: BillingCycle;
-
-  @ApiProperty()
-  intervalCount: number;
+  billingCycle: string;
 
   @ApiProperty()
   nextBillingDate: Date;
@@ -109,6 +107,12 @@ export class SubscriptionDto {
   @ApiProperty()
   status: string;
 
+  @ApiPropertyOptional()
+  category?: string;
+
   @ApiProperty()
-  category: string;
+  createdAt: Date;
+
+  @ApiProperty()
+  updatedAt: Date;
 }
