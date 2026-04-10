@@ -22,7 +22,7 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/login`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/v1/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -42,8 +42,8 @@ export default function LoginPage() {
         throw new Error(data.error?.message || "Login failed");
       }
 
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("accessToken", data.data.accessToken);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
       router.push("/dashboard");
     } catch (err: any) {
       // Demo fallback

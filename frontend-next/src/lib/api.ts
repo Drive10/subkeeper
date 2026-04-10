@@ -1,10 +1,10 @@
 const getApiBaseUrl = () => {
   if (typeof window !== "undefined") {
-    return `${window.location.protocol}//${window.location.hostname}:3001/api`;
+    return `${window.location.protocol}//${window.location.hostname}:3001/api/v1`;
   }
   return process.env.NEXT_PUBLIC_API_URL
-    ? `${process.env.NEXT_PUBLIC_API_URL}/api`
-    : "http://localhost:3001/api";
+    ? `${process.env.NEXT_PUBLIC_API_URL}/api/v1`
+    : "http://localhost:3001/api/v1";
 };
 
 const API_URL = getApiBaseUrl();

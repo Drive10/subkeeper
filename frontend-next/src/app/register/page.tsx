@@ -34,7 +34,7 @@ export default function RegisterPage() {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/auth/register`,
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"}/api/v1/auth/register`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -51,8 +51,8 @@ export default function RegisterPage() {
         return;
       }
 
-      localStorage.setItem("accessToken", data.accessToken);
-      localStorage.setItem("refreshToken", data.refreshToken);
+      localStorage.setItem("accessToken", data.data.accessToken);
+      localStorage.setItem("refreshToken", data.data.refreshToken);
       router.push("/dashboard");
     } catch (err: any) {
       // Demo fallback
