@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BillingCycle {
+  daily
+  weekly
+  monthly
+  quarterly
+  yearly
+  custom
+}
+
+enum SubscriptionStatus {
+  active
+  paused
+  cancelled
+  expired
+}
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+}
+
+enum ReminderType {
+  pre_reminder
+  on_due
+  overdue
+}
+
+enum ReminderStatus {
+  pending
+  sent
+  failed
+  cancelled
+}
+
+enum DetectionStatus {
+  pending
+  matched
+  unmatched
+  confirmed
+  rejected
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  subscriptions   Subscription[]
+  detectionLogs   DetectionLog[]
+
+  @@map("users")
+}
+
+model Subscription {
+  id               String            @id @default(uuid())
+  userId           String            @map("user_id")
+  name             String
+  amount           Int
+  currency         String            @default("INR")
+  billingCycle     BillingCycle      @map("billing_cycle")
+  intervalCount    Int               @default(1) @map("interval_count")
+  nextBillingDate DateTime           @map("next_billing_date")
+  lastBillingDate DateTime?          @map("last_billing_date")
+  category         String?
+  description      String?
+  status           SubscriptionStatus @default(active)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payments  Payment[]
+  reminders Reminder[]
+
+  @@index([userId])
+  @@index([nextBillingDate])
+  @@map("subscriptions")
+}
+
+model Payment {
+  id              String        @id @default(uuid())
+  subscriptionId  String        @map("subscription_id")
+  userId          String        @map("user_id")
+  amount          Int
+  currency        String        @default("INR")
+  status          PaymentStatus @default(pending)
+  paymentDate     DateTime      @map("payment_date")
+  source          String?
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([subscriptionId])
+  @@index([userId])
+  @@map("payments")
+}
+
+model Reminder {
+  id             String         @id @default(uuid())
+  subscriptionId String         @map("subscription_id")
+  reminderType   ReminderType   @map("reminder_type")
+  daysOffset     Int            @map("days_offset")
+  scheduledAt    DateTime       @map("scheduled_at")
+  sentAt         DateTime?      @map("sent_at")
+  status         ReminderStatus @default(pending)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  subscription Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@index([scheduledAt])
+  @@map("reminders")
+}
+
+model DetectionLog {
+  id              String          @id @default(uuid())
+  userId          String          @map("user_id")
+  rawText         String          @map("raw_text")
+  parsedData      Json?           @map("parsed_data")
+  confidenceScore Float?          @map("confidence_score")
+  status          DetectionStatus @default(pending)
+  createdAt       DateTime        @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("detection_logs")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
