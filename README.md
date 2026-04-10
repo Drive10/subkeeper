@@ -1,102 +1,73 @@
-# Subscription Manager Elite (SubSense)
+# SubSense - Subscription Manager
 
-A production-ready subscription intelligence platform for tracking, detecting, and optimizing recurring payments.
-
-## Features
-
-- **Subscription Management**: Full CRUD operations for subscriptions with multiple billing cycles
-- **Smart Detection**: SMS/Email parsing to automatically detect subscriptions
-- **Reminder Engine**: Automated reminders (T-3, T-1, T-0) for upcoming renewals
-- **Analytics Dashboard**: Monthly spend tracking, category breakdown, unused subscription detection
-- **Payment Tracking**: Record and track payment history
-- **RESTful API**: Complete API with authentication and rate limiting
-- **Real-time Updates**: WebSocket support for live notifications
-- **Interactive Docs**: Swagger/OpenAPI documentation
-- **React Frontend**: Modern UI with dashboard, analytics, and subscription management
+A full-stack subscription tracking application built with NestJS (backend) and Next.js 14 (frontend).
 
 ## Tech Stack
 
-### Backend
-- **Runtime**: Node.js 20+ with TypeScript
-- **Framework**: Express.js
-- **Database**: PostgreSQL with Prisma ORM
-- **Cache/Queue**: Redis with BullMQ
-- **Validation**: Zod
-- **Authentication**: JWT (access + refresh tokens)
-- **Real-time**: Socket.IO
-- **API Docs**: Swagger UI
-- **Testing**: Jest
+- **Backend**: NestJS, Prisma, PostgreSQL, JWT Auth
+- **Frontend**: Next.js 14 (App Router), Tailwind CSS, ShadCN UI, Recharts
 
-### Frontend
-- **Framework**: React 18 with TypeScript
-- **UI**: Material UI (MUI)
-- **Charts**: Recharts
-- **State**: React Context
-- **Real-time**: Socket.IO Client
-
-## Quick Start
+## Getting Started
 
 ### Prerequisites
 
 - Node.js 18+
-- PostgreSQL 15+
-- Redis 7+
+- PostgreSQL database
+
+### Database Setup
+
+1. Create a PostgreSQL database:
+
+```sql
+CREATE DATABASE subscription_manager;
+```
+
+2. Update the connection string in `backend-nest/.env`:
+
+```
+DATABASE_URL="postgresql://postgres:your_password@localhost:5432/subscription_manager"
+```
+
+3. Run migrations:
+
+```bash
+cd backend-nest
+npx prisma migrate dev --name init
+```
 
 ### Backend Setup
 
 ```bash
-# Install dependencies
+cd backend-nest
 npm install
-
-# Generate Prisma Client
-npx prisma generate
-
-# Run migrations
-npx prisma migrate dev
-
-# Seed demo data (optional)
-npm run seed
-
-# Start development server
-npm run dev
+npm run start:dev
 ```
+
+API runs at `http://localhost:3001/api`
 
 ### Frontend Setup
 
 ```bash
-cd frontend
+cd frontend-next
 npm install
-npm start
+npm run dev
 ```
 
-### Docker Setup
-
-```bash
-docker-compose up
-```
-
-## API Documentation
-
-Once the server is running, visit: **http://localhost:3000/api-docs**
-
-## Demo Credentials
-
-After running `npm run seed`:
-- **Email**: demo@subsense.io
-- **Password**: demo123456
+Frontend runs at `http://localhost:3000`
 
 ## API Endpoints
 
-### Authentication
+### Auth
+
 - `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/refresh` - Refresh access token
-- `POST /api/auth/logout` - Logout user
+- `POST /api/auth/login` - User login
 - `GET /api/auth/me` - Get current user
+- `POST /api/auth/logout` - User logout
 
 ### Subscriptions
-- `POST /api/subscriptions` - Create subscription
+
 - `GET /api/subscriptions` - List subscriptions
+- `POST /api/subscriptions` - Create subscription
 - `GET /api/subscriptions/:id` - Get subscription
 - `PATCH /api/subscriptions/:id` - Update subscription
 - `DELETE /api/subscriptions/:id` - Delete subscription
@@ -104,82 +75,56 @@ After running `npm run seed`:
 - `POST /api/subscriptions/:id/resume` - Resume subscription
 - `GET /api/subscriptions/upcoming` - Upcoming renewals
 
-### Reminders
-- `POST /api/reminders` - Create reminder
-- `GET /api/reminders` - List reminders
+### Analytics
 
-### Billing
-- `POST /api/payments` - Record payment
+- `GET /api/analytics/monthly-spend` - Monthly spend
+- `GET /api/analytics/category-breakdown` - Category breakdown
+- `GET /api/analytics/subscription-stats` - Subscription stats
+- `GET /api/analytics/total-monthly-spend` - Total monthly spend
+
+### Payments
+
 - `GET /api/payments` - List payments
+- `POST /api/payments` - Create payment
 
 ### Detection
+
 - `POST /api/detect/sms` - Detect from SMS
-- `POST /api/detect/email` - Detect from email
 - `POST /api/detect/confirm` - Confirm detection
-- `GET /api/detect/logs` - Detection logs
+- `GET /api/detect/logs` - Get detection logs
 
-### Analytics
-- `GET /api/analytics/monthly-spend` - Monthly spend data
-- `GET /api/analytics/category-breakdown` - Category breakdown
-- `GET /api/analytics/subscription-stats` - Subscription statistics
-- `GET /api/analytics/upcoming-renewals` - Upcoming renewals
-- `GET /api/analytics/total-monthly-spend` - Total monthly spend
-- `GET /api/analytics/unused-subscriptions` - Unused subscriptions
+### Reminders
 
-## Health Check
-
-```bash
-GET /health
-```
-
-Returns database, Redis, and WebSocket status.
+- `GET /api/reminders/:subscriptionId` - Get reminders
+- `POST /api/reminders` - Create reminder
+- `DELETE /api/reminders/:id` - Cancel reminder
 
 ## Project Structure
 
 ```
-├── src/                    # Backend source
-│   ├── config/            # Configuration
-│   ├── modules/           # Feature modules
-│   │   ├── auth/         # Authentication
-│   │   ├── subscription/ # Subscription management
-│   │   ├── reminder/     # Reminder engine
-│   │   ├── billing/      # Payment tracking
-│   │   ├── detection/    # SMS/Email parsing
-│   │   ├── analytics/    # Analytics
-│   │   └── notification/ # Notification service
-│   ├── workers/          # Background workers
-│   └── shared/           # Shared utilities
-├── frontend/              # React frontend
-│   └── src/
-│       ├── components/  # UI components
-│       ├── pages/       # Page components
-│       ├── services/    # API services
-│       ├── context/     # React contexts
-│       └── hooks/       # Custom hooks
-├── prisma/               # Database schema & seeds
-└── tests/                # Backend tests
+backend-nest/
+├── src/
+│   ├── modules/
+│   │   ├── auth/
+│   │   ├── subscription/
+│   │   ├── analytics/
+│   │   ├── billing/
+│   │   ├── detection/
+│   │   └── reminder/
+│   └── prisma/
+│       └── schema.prisma
+
+frontend-next/
+├── src/
+│   ├── app/
+│   │   ├── login/
+│   │   ├── register/
+│   │   ├── dashboard/
+│   │   ├── subscriptions/
+│   │   └── analytics/
+│   ├── components/ui/
+│   └── lib/
 ```
-
-## Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run in watch mode
-npm run test:watch
-```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| PORT | Server port | 3000 |
-| DATABASE_URL | PostgreSQL connection string | postgresql://... |
-| REDIS_HOST | Redis host | localhost |
-| REDIS_PORT | Redis port | 6379 |
-| JWT_ACCESS_SECRET | JWT access token secret | - |
-| JWT_REFRESH_SECRET | JWT refresh token secret | - |
 
 ## License
 
