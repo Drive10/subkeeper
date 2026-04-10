@@ -1,34 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 
-interface MonthlySpend {
-  month: string;
-  total: number;
-  currency: string;
-}
-
-interface CategorySpend {
-  category: string;
-  total: number;
-  count: number;
-}
-
-interface SubscriptionStats {
-  totalActive: number;
-  totalPaused: number;
-  totalCancelled: number;
-  totalExpired: number;
-}
-
 @Injectable()
 export class AnalyticsService {
   constructor(private prisma: PrismaService) {}
 
-  async getMonthlySpend(
-    userId: string,
-    months: number = 6,
-  ): Promise<MonthlySpend[]> {
-    const results: MonthlySpend[] = [];
+  async getMonthlySpend(userId: string, months: number = 6) {
+    const results: any[] = [];
     const monthNames = [
       "Jan",
       "Feb",
@@ -77,7 +55,7 @@ export class AnalyticsService {
     return results;
   }
 
-  async getCategoryBreakdown(userId: string): Promise<CategorySpend[]> {
+  async getCategoryBreakdown(userId: string) {
     const subscriptions = await this.prisma.subscription.findMany({
       where: { userId, status: "active" },
       select: { category: true, amount: true },
@@ -100,10 +78,10 @@ export class AnalyticsService {
         total: data.total,
         count: data.count,
       }))
-      .sort((a, b) => b.total - a.total);
+      .sort((a: any, b: any) => b.total - a.total);
   }
 
-  async getSubscriptionStats(userId: string): Promise<SubscriptionStats> {
+  async getSubscriptionStats(userId: string) {
     const [active, paused, cancelled, expired] = await Promise.all([
       this.prisma.subscription.count({ where: { userId, status: "active" } }),
       this.prisma.subscription.count({ where: { userId, status: "paused" } }),
@@ -121,9 +99,7 @@ export class AnalyticsService {
     };
   }
 
-  async getTotalMonthlySpend(
-    userId: string,
-  ): Promise<{ total: number; currency: string }> {
+  async getTotalMonthlySpend(userId: string) {
     const subscriptions = await this.prisma.subscription.findMany({
       where: { userId, status: "active" },
       select: { amount: true, billingCycle: true, intervalCount: true },

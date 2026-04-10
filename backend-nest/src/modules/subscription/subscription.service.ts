@@ -1,47 +1,35 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { v4 as uuidv4 } from "uuid";
 import { PrismaService } from "../../prisma/prisma.service";
-import {
-  CreateSubscriptionDto,
-  UpdateSubscriptionDto,
-  SubscriptionDto,
-} from "./subscription.dto";
 
 @Injectable()
 export class SubscriptionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    userId: string,
-    dto: CreateSubscriptionDto,
-  ): Promise<SubscriptionDto> {
+  async create(userId: string, dto: any) {
     if (new Date(dto.nextBillingDate) < new Date()) {
       throw new Error("Next billing date must be in the future");
     }
 
-    const subscription = await this.prisma.subscription.create({
+    return this.prisma.subscription.create({
       data: {
-        id: uuidv4(),
         userId,
         name: dto.name,
         amount: dto.amount,
         currency: dto.currency || "INR",
-        billingCycle: dto.billingCycle,
+        billingCycle: dto.billingCycle || "monthly",
         intervalCount: dto.intervalCount || 1,
         nextBillingDate: new Date(dto.nextBillingDate),
         category: dto.category,
         description: dto.description,
       },
     });
-
-    return subscription;
   }
 
   async findAll(
     userId: string,
     filters?: { status?: string; category?: string },
   ) {
-    const where: Record<string, unknown> = { userId };
+    const where: any = { userId };
     if (filters?.status) where.status = filters.status;
     if (filters?.category) where.category = filters.category;
 
@@ -51,10 +39,7 @@ export class SubscriptionService {
     });
   }
 
-  async findById(
-    subscriptionId: string,
-    userId: string,
-  ): Promise<SubscriptionDto> {
+  async findById(subscriptionId: string, userId: string) {
     const subscription = await this.prisma.subscription.findFirst({
       where: { id: subscriptionId, userId },
     });
@@ -66,11 +51,7 @@ export class SubscriptionService {
     return subscription;
   }
 
-  async update(
-    subscriptionId: string,
-    userId: string,
-    dto: UpdateSubscriptionDto,
-  ): Promise<SubscriptionDto> {
+  async update(subscriptionId: string, userId: string, dto: any) {
     await this.findById(subscriptionId, userId);
 
     return this.prisma.subscription.update({
@@ -79,15 +60,12 @@ export class SubscriptionService {
     });
   }
 
-  async delete(subscriptionId: string, userId: string): Promise<void> {
+  async delete(subscriptionId: string, userId: string) {
     await this.findById(subscriptionId, userId);
     await this.prisma.subscription.delete({ where: { id: subscriptionId } });
   }
 
-  async pause(
-    subscriptionId: string,
-    userId: string,
-  ): Promise<SubscriptionDto> {
+  async pause(subscriptionId: string, userId: string) {
     await this.findById(subscriptionId, userId);
 
     return this.prisma.subscription.update({
@@ -96,10 +74,7 @@ export class SubscriptionService {
     });
   }
 
-  async resume(
-    subscriptionId: string,
-    userId: string,
-  ): Promise<SubscriptionDto> {
+  async resume(subscriptionId: string, userId: string) {
     const subscription = await this.findById(subscriptionId, userId);
 
     if (subscription.status !== "paused") {
@@ -131,7 +106,7 @@ export class SubscriptionService {
     });
   }
 
-  private calculateNextBillingDate(date: Date, billingCycle: string): Date {
+  private calculateNextBillingDate(date: Date, billingCycle: string) {
     const next = new Date(date);
     switch (billingCycle) {
       case "daily":
