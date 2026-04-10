@@ -17,7 +17,12 @@ export class ReminderService {
     data: { reminderType: string; daysOffset: number; scheduledAt: Date },
   ) {
     return this.prisma.reminder.create({
-      data: { subscriptionId, ...data },
+      data: {
+        subscriptionId,
+        reminderType: data.reminderType as any,
+        daysOffset: data.daysOffset,
+        scheduledAt: data.scheduledAt,
+      },
     });
   }
 
@@ -28,7 +33,7 @@ export class ReminderService {
     if (!reminder) throw new Error("Reminder not found");
     return this.prisma.reminder.update({
       where: { id },
-      data: { status: "cancelled" },
+      data: { status: "cancelled" as any },
     });
   }
 }
