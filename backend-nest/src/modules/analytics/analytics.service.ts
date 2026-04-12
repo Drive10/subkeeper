@@ -16,27 +16,44 @@ export class AnalyticsService {
       _sum: {
         amount: true,
       },
+      orderBy: {
+        _sum: {
+          amount: "desc",
+        },
+      },
     });
   }
 
   async getMonthlySpendingTrend(userId: string, months: number = 6) {
-    const endDate = new Date();
-    const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - months + 1);
-    startDate.setDate(1);
-    startDate.setHours(0, 0, 0, 0);
+    const subscriptions = await this.prisma.subscription.findMany({
+      where: {
+        userId,
+        status: "active",
+      },
+    });
 
-    return this.prisma.$queryRaw`
-      SELECT 
-        DATE_TRUNC('month', "nextBillingDate")::date as month,
-        SUM(amount) as total_spending
-      FROM "Subscription"
-      WHERE "userId" = ${userId}
-        AND "status" = 'active'
-        AND "nextBillingDate" >= ${startDate}
-        AND "nextBillingDate" <= ${endDate}
-      GROUP BY DATE_TRUNC('month', "nextBillingDate")
-      ORDER BY month;
-    `;
+    const monthlyData: Record<string, number> = {};
+    const now = new Date();
+    
+    for (let i = months - 1; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthKey = date.toISOString().substring(0, 7);
+      monthlyData[monthKey] = 0;
+    }
+
+    subscriptions.forEach((sub) => {
+      const monthlyAmount = sub.billingCycle === "yearly" 
+        ? Math.round(sub.amount / 12) 
+        : sub.amount;
+      
+      Object.keys(monthlyData).forEach((month) => {
+        monthlyData[month] += monthlyAmount;
+      });
+    });
+
+    return Object.entries(monthlyData).map(([month, amount]) => ({
+      month: month,
+      amount: amount,
+    }));
   }
 }

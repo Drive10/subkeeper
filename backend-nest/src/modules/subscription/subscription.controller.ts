@@ -85,6 +85,18 @@ export class SubscriptionController {
     return this.subscriptionService.delete(id, req.user.id);
   }
 
+  @Post(":id/pause")
+  @ApiOperation({ summary: "Pause subscription" })
+  async pause(@Request() req, @Param("id") id: string) {
+    return this.subscriptionService.updateStatus(id, req.user.id, "paused");
+  }
+
+  @Post(":id/resume")
+  @ApiOperation({ summary: "Resume subscription" })
+  async resume(@Request() req, @Param("id") id: string) {
+    return this.subscriptionService.updateStatus(id, req.user.id, "active");
+  }
+
   @Get("analytics/category")
   @ApiOperation({ summary: "Get category-wise spending" })
   async getCategoryWiseSpending(@Request() req) {

@@ -74,6 +74,15 @@ export class SubscriptionService {
     });
   }
 
+  async updateStatus(subscriptionId: string, userId: string, status: "active" | "paused" | "cancelled" | "expired") {
+    await this.findById(subscriptionId, userId);
+
+    return this.prisma.subscription.update({
+      where: { id: subscriptionId },
+      data: { status },
+    });
+  }
+
   async delete(subscriptionId: string, userId: string) {
     await this.findById(subscriptionId, userId);
     await this.prisma.subscription.delete({ where: { id: subscriptionId } });

@@ -60,6 +60,12 @@ export default function DashboardPage() {
     }
     setMounted(true);
     fetchData();
+
+    const handleFocus = () => {
+      fetchData();
+    };
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
   }, [router, pathname]);
 
   const fetchData = async () => {

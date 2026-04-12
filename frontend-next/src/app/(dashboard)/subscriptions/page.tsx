@@ -73,6 +73,35 @@ export default function SubscriptionsPage() {
     }
   };
 
+  const handleEdit = (id: string) => {
+    router.push(`/subscriptions/${id}`);
+  };
+
+  const handlePause = async (id: string, currentStatus: string) => {
+    try {
+      if (currentStatus === "active") {
+        await api.pauseSubscription(id);
+      } else {
+        await api.resumeSubscription(id);
+      }
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Failed to update subscription:", error);
+    }
+    setSelectedSub(null);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this subscription?")) return;
+    try {
+      await api.deleteSubscription(id);
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Failed to delete subscription:", error);
+    }
+    setSelectedSub(null);
+  };
+
   const filteredAndSortedSubscriptions = useMemo(() => {
     let result = [...subscriptions];
 
@@ -240,11 +269,17 @@ export default function SubscriptionsPage() {
                     </Button>
                     {selectedSub === sub.id && (
                       <div className="absolute right-0 top-8 z-10 w-32 bg-card border rounded-lg shadow-lg py-1">
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent">
+                        <button 
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent"
+                          onClick={() => handleEdit(sub.id)}
+                        >
                           <Pencil className="w-4 h-4" />
                           Edit
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent">
+                        <button 
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-accent"
+                          onClick={() => handlePause(sub.id, sub.status)}
+                        >
                           {sub.status === "active" ? (
                             <>
                               <Pause className="w-4 h-4" />
@@ -257,7 +292,10 @@ export default function SubscriptionsPage() {
                             </>
                           )}
                         </button>
-                        <button className="flex items-center gap-2 w-full px-3 py-2 text-sm text-destructive hover:bg-accent">
+                        <button 
+                          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-destructive hover:bg-accent"
+                          onClick={() => handleDelete(sub.id)}
+                        >
                           <Trash2 className="w-4 h-4" />
                           Delete
                         </button>

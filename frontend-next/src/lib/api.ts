@@ -92,6 +92,53 @@ export const api = {
     const json = await res.json();
     return extractData(json);
   },
+
+  updateSubscription: async (id: string, data: {
+    name?: string;
+    amount?: number;
+    billingCycle?: string;
+    nextBillingDate?: string;
+    category?: string;
+    status?: string;
+  }) => {
+    const res = await fetch(`${getApiUrl()}/subscriptions/${id}`, {
+      method: "PATCH",
+      headers: { ...getHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to update subscription");
+    const json = await res.json();
+    return extractData(json);
+  },
+
+  deleteSubscription: async (id: string) => {
+    const res = await fetch(`${getApiUrl()}/subscriptions/${id}`, {
+      method: "DELETE",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to delete subscription");
+    return true;
+  },
+
+  pauseSubscription: async (id: string) => {
+    const res = await fetch(`${getApiUrl()}/subscriptions/${id}/pause`, {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to pause subscription");
+    const json = await res.json();
+    return extractData(json);
+  },
+
+  resumeSubscription: async (id: string) => {
+    const res = await fetch(`${getApiUrl()}/subscriptions/${id}/resume`, {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    if (!res.ok) throw new Error("Failed to resume subscription");
+    const json = await res.json();
+    return extractData(json);
+  },
 };
 
 export default api;
